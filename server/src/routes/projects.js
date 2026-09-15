@@ -1,0 +1,12 @@
+import {Router} from 'express';
+import {z} from 'zod';
+import {prisma} from '../lib.js';
+import {authenticate,authorize} from '../middleware.js';
+const router=Router(); router.use(authenticate);
+const projectSchema=z.object({name:z.string().min(2),client:z.string().min(2),description:z.string().optional(),status:z.enum(['PLANNING','ACTIVE','ON_HOLD','COMPLETED']).optional(),dueDate:z.string().datetime().optional().nullable()});
+router.get('/',async(req,res)=>{const page=Math.max(1,Number(req.query.page)||1),take=8,where=req.query.status?{status:req.query.status}:{};const [projects,total]=await Promise.all([prisma.project.findMany({where,skip:(page-1)*take,take,include:{manager:{select:{name:true}},tasks:{select:{status:true}}},orderBy:{updatedAt:'desc'}}),prisma.project.count({where})]);res.json({projects,page,pages:Math.ceil(total/take),total})});
+router.get('/:id',async(req,res)=>{const project=await prisma.project.findUnique({where:{id:req.params.id},include:{manager:{select:{id:true,name:true,email:true}},tasks:{include:{assignee:{select:{id:true,name:true}},_count:{select:{comments:true}}},orderBy:{createdAt:'desc'}}}});if(!project)return res.status(404).json({message:'Project not found'});res.json({project})});
+router.post('/',authorize('ADMIN','MANAGER'),async(req,res,next)=>{try{const data=projectSchema.parse(req.body);const project=await prisma.project.create({data:{...data,dueDate:data.dueDate?new Date(data.dueDate):null,managerId:req.user.id}});res.status(201).json({project})}catch(e){e.status=400;next(e)}});
+router.patch('/:id',authorize('ADMIN','MANAGER'),async(req,res,next)=>{try{const data=projectSchema.partial().parse(req.body);const project=await prisma.project.update({where:{id:req.params.id},data:{...data,dueDate:data.dueDate?new Date(data.dueDate):data.dueDate}});res.json({project})}catch(e){e.status=400;next(e)}});
+router.delete('/:id',authorize('ADMIN'),async(req,res)=>{await prisma.project.delete({where:{id:req.params.id}});res.status(204).end()});
+export default router;
