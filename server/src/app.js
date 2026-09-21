@@ -2,3 +2,4 @@ import express from 'express';import cors from 'cors';import helmet from 'helmet
 import auth from './routes/auth.js';import projects from './routes/projects.js';import tasks from './routes/tasks.js';import dashboard from './routes/dashboard.js';import {errorHandler} from './middleware.js';
 import integrations from './routes/integrations.js';
 export const app=express();app.use(helmet());app.use(cors({origin:process.env.CLIENT_URL||'http://localhost:5173',credentials:true}));app.use(express.json({limit:'1mb'}));app.use(cookieParser());app.use('/api/auth',rateLimit({windowMs:15*60*1000,limit:30,standardHeaders:true}),auth);app.use('/api/projects',projects);app.use('/api/tasks',tasks);app.use('/api/dashboard',dashboard);app.use('/api/integrations',integrations);app.get('/api/health',(req,res)=>res.json({status:'ok'}));app.use(errorHandler);
+export default app;
