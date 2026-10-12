@@ -201,4 +201,4 @@ Production secrets, including `DATABASE_URL` and `JWT_SECRET`, are managed throu
 Full-Stack Web Developer
 
 - [GitHub](https://github.com/munazza-shan-web)
-- [Portfolio](https://munazza-shan-web.github.io/munazza-shan-web/)
+- [Portfolio](https://munazza-shan-web.github.io/portfolio/)
